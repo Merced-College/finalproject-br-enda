@@ -26,7 +26,8 @@ public class Main {
             System.out.println("5. Undo last added transaction");
             System.out.println("6. Schedule a future bill");
             System.out.println("7. Process scheduled bills");
-            System.out.println("8. Exit");
+            System.out.println("8. View monthly report");
+            System.out.println("9. Exit");
             System.out.print("Enter your choice: ");
 
             String choice = scanner.nextLine();
@@ -42,11 +43,8 @@ public class Main {
 
                 case "3":
                     budget.showSummary();
-
-                    // NEW: Recursive total spending
                     double recursiveTotal =
                         budget.calculateTotalSpendingRecursive(ledger.getTransactions());
-
                     System.out.println("Total expenses (calculated with recursion): $" + recursiveTotal);
                     break;
 
@@ -67,12 +65,16 @@ public class Main {
                     break;
 
                 case "8":
+                    viewMonthlyReport(scanner, ledger, budget);
+                    break;
+
+                case "9":
                     System.out.println("Goodbye!");
                     running = false;
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Please enter a number from 1 to 8.");
+                    System.out.println("Invalid choice. Please enter a number from 1 to 9.");
             }
         }
 
@@ -140,7 +142,6 @@ public class Main {
         if (removed != null) {
             budget.removeTransaction(removed);
 
-            // Remove from undo stack if it's the most recent
             if (!undoStack.isEmpty() && undoStack.peek() == removed) {
                 undoStack.pop();
             }
@@ -165,7 +166,7 @@ public class Main {
             budget.removeTransaction(last);
             System.out.println("Last transaction undone.");
         } else {
-            System.out.println("Undo failed — transaction not found.");
+            System.out.println("Undo failed, transaction not found.");
         }
     }
 
@@ -216,5 +217,22 @@ public class Main {
         }
 
         System.out.println("All scheduled bills processed.");
+    }
+
+    // -------------------- VIEW MONTHLY REPORT --------------------
+    private static void viewMonthlyReport(Scanner scanner, Ledger ledger, Budget budget) {
+
+        System.out.print("Enter month number (1 to 12): ");
+        String input = scanner.nextLine();
+
+        int month;
+        try {
+            month = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid month number.");
+            return;
+        }
+
+        budget.showMonthlyReport(ledger.getTransactions(), month);
     }
 }
