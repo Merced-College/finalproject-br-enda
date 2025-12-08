@@ -1,4 +1,7 @@
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Scanner;
+import java.util.Stack;
 
 public class Main {
 
@@ -6,6 +9,9 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         Ledger ledger = new Ledger();
         Budget budget = new Budget();
+
+        Stack<Transaction> undoStack = new Stack<>();
+        Queue<Transaction> scheduledBills = new LinkedList<>();
 
         System.out.println("Welcome to the Personal Finance Budget App!");
 
@@ -17,14 +23,17 @@ public class Main {
             System.out.println("2. View all transactions");
             System.out.println("3. View budget summary");
             System.out.println("4. Remove a transaction");
-            System.out.println("5. Exit");
+            System.out.println("5. Undo last added transaction");
+            System.out.println("6. Schedule a future bill");
+            System.out.println("7. Process scheduled bills");
+            System.out.println("8. Exit");
             System.out.print("Enter your choice: ");
 
             String choice = scanner.nextLine();
 
             switch (choice) {
                 case "1":
-                    addTransaction(scanner, ledger, budget);
+                    addTransaction(scanner, ledger, budget, undoStack);
                     break;
                 case "2":
                     ledger.showAllTransactions();
@@ -33,28 +42,39 @@ public class Main {
                     budget.showSummary();
                     break;
                 case "4":
-                    removeTransaction(scanner, ledger, budget);
+                    removeTransaction(scanner, ledger, budget, undoStack);
                     break;
                 case "5":
+                    undoLastTransaction(ledger, budget, undoStack);
+                    break;
+                case "6":
+                    scheduleBill(scanner, scheduledBills);
+                    break;
+                case "7":
+                    processScheduledBills(ledger, budget, scheduledBills, undoStack);
+                    break;
+                case "8":
                     System.out.println("Goodbye!");
                     running = false;
                     break;
                 default:
-                    System.out.println("Invalid choice. Please enter 1, 2, 3, 4, or 5.");
+                    System.out.println("Invalid choice. Please enter 1–8.");
             }
         }
 
         scanner.close();
     }
 
-    // ---------- helper methods below must be INSIDE the Main class ----------
+    // -------------------- Helper Methods --------------------
 
     // Add a transaction
-    private static void addTransaction(Scanner scanner, Ledger ledger, Budget budget) {
+    private static void addTransaction(Scanner scanner, Ledger ledger, Budget budget,
+                                       Stack<Transaction> undoStack) {
+
         System.out.print("Enter category (e.g. Food, Bills, Income): ");
         String category = scanner.nextLine();
 
-        System.out.print("Enter amount (use negative for expenses, positive for income): ");
+        System.out.print("Enter amount (negative for expense, positive for income): ");
         double amount;
         try {
             amount = Double.parseDouble(scanner.nextLine());
@@ -72,24 +92,25 @@ public class Main {
         Transaction t = new Transaction(category, amount, description, date);
         ledger.addTransaction(t);
         budget.addTransaction(t);
+        undoStack.push(t);
 
-        System.out.println("Transaction added to ledger and budget.");
+        System.out.println("Transaction added.");
     }
 
-    // Remove a transaction
-    private static void removeTransaction(Scanner scanner, Ledger ledger, Budget budget) {
-        System.out.println("\n--- Remove a Transaction ---");
+    // Remove by index
+    private static void removeTransaction(Scanner scanner, Ledger ledger, Budget budget,
+                                          Stack<Transaction> undoStack) {
 
-        var transactions = ledger.getTransactions();
+        var list = ledger.getTransactions();
 
-        if (transactions.isEmpty()) {
-            System.out.println("There are no transactions to remove.");
+        if (list.isEmpty()) {
+            System.out.println("No transactions to remove.");
             return;
         }
 
-        // Show transactions with index numbers
-        for (int i = 0; i < transactions.size(); i++) {
-            System.out.println(i + ": " + transactions.get(i));
+        System.out.println("\n--- Transaction List ---");
+        for (int i = 0; i < list.size(); i++) {
+            System.out.println(i + ": " + list.get(i));
         }
 
         System.out.print("Enter the number of the transaction to remove: ");
@@ -99,14 +120,90 @@ public class Main {
         try {
             index = Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid number. No transaction removed.");
+            System.out.println("Invalid number.");
             return;
         }
 
         Transaction removed = ledger.removeTransaction(index);
         if (removed != null) {
             budget.removeTransaction(removed);
-            System.out.println("Budget updated after removal.");
+
+            // Clean undo stack if necessary
+            if (!undoStack.isEmpty() && undoStack.peek() == removed) {
+                undoStack.pop();
+            }
+
+            System.out.println("Transaction removed successfully.");
         }
+    }
+
+    // Undo using Stack
+    private static void undoLastTransaction(Ledger ledger, Budget budget,
+                                            Stack<Transaction> undoStack) {
+
+        if (undoStack.isEmpty()) {
+            System.out.println("Nothing to undo.");
+            return;
+        }
+
+        Transaction last = undoStack.pop();
+        boolean removed = ledger.removeTransaction(last);
+
+        if (removed) {
+            budget.removeTransaction(last);
+            System.out.println("Last transaction undone.");
+        } else {
+            System.out.println("Undo failed — transaction not found.");
+        }
+    }
+
+    // Queue: schedule a future bill
+    private static void scheduleBill(Scanner scanner, Queue<Transaction> scheduledBills) {
+
+        System.out.print("Enter category for future bill: ");
+        String category = scanner.nextLine();
+
+        System.out.print("Enter amount (negative for expense): ");
+        double amount;
+        try {
+            amount = Double.parseDouble(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Bill not scheduled.");
+            return;
+        }
+
+        System.out.print("Enter description: ");
+        String description = scanner.nextLine();
+
+        System.out.print("Enter due date: ");
+        String date = scanner.nextLine();
+
+        Transaction t = new Transaction(category, amount, description, date);
+        scheduledBills.add(t);
+        System.out.println("Future bill scheduled.");
+    }
+
+    // Process all bills in FIFO order
+    private static void processScheduledBills(Ledger ledger, Budget budget,
+                                              Queue<Transaction> scheduledBills,
+                                              Stack<Transaction> undoStack) {
+
+        if (scheduledBills.isEmpty()) {
+            System.out.println("No scheduled bills to process.");
+            return;
+        }
+
+        System.out.println("\nProcessing scheduled bills...");
+
+        while (!scheduledBills.isEmpty()) {
+            Transaction t = scheduledBills.poll();
+            ledger.addTransaction(t);
+            budget.addTransaction(t);
+            undoStack.push(t);
+
+            System.out.println("Processed: " + t);
+        }
+
+        System.out.println("All scheduled bills processed.");
     }
 }
