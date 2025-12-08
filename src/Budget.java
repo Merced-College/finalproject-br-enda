@@ -25,6 +25,31 @@ public class Budget {
         categoryTotals.put(category, current + Math.abs(amount));
     }
 
+    public void removeTransaction(Transaction t) {
+        if (t == null) {
+            return;
+        }
+
+        double amount = t.getAmount();
+        String category = t.getCategory();
+
+        if (amount > 0) {
+            totalIncome -= amount;
+        } else {
+            totalExpenses -= Math.abs(amount);
+        }
+
+        Double current = categoryTotals.get(category);
+        if (current != null) {
+            double updated = current - Math.abs(amount);
+            if (updated <= 0) {
+                categoryTotals.remove(category);
+            } else {
+                categoryTotals.put(category, updated);
+            }
+        }
+    }
+
     public void showSummary() {
         System.out.println("\n--- Budget Summary ---");
         System.out.println("Total Income: $" + totalIncome);

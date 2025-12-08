@@ -26,4 +26,15 @@ public class Ledger {
     public LinkedList<Transaction> getTransactions() {
         return transactions;
     }
+
+    public Transaction removeTransaction(int index) {
+        if (index < 0 || index >= transactions.size()) {
+            System.out.println("Invalid index. No transaction removed.");
+            return null;
+        }
+        Transaction removed = transactions.remove(index);
+        System.out.println("Removed transaction: " + removed);
+        return removed;
+    }
+
 }
