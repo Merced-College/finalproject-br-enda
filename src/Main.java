@@ -21,7 +21,7 @@ public class Main {
             System.out.println("\nPlease choose an option:");
             System.out.println("1. Add a transaction");
             System.out.println("2. View all transactions");
-            System.out.println("3. View budget summary");
+            System.out.println("3. View budget summary (includes recursion)");
             System.out.println("4. Remove a transaction");
             System.out.println("5. Undo last added transaction");
             System.out.println("6. Schedule a future bill");
@@ -35,39 +35,51 @@ public class Main {
                 case "1":
                     addTransaction(scanner, ledger, budget, undoStack);
                     break;
+
                 case "2":
                     ledger.showAllTransactions();
                     break;
+
                 case "3":
                     budget.showSummary();
+
+                    // NEW: Recursive total spending
+                    double recursiveTotal =
+                        budget.calculateTotalSpendingRecursive(ledger.getTransactions());
+
+                    System.out.println("Total expenses (calculated with recursion): $" + recursiveTotal);
                     break;
+
                 case "4":
                     removeTransaction(scanner, ledger, budget, undoStack);
                     break;
+
                 case "5":
                     undoLastTransaction(ledger, budget, undoStack);
                     break;
+
                 case "6":
                     scheduleBill(scanner, scheduledBills);
                     break;
+
                 case "7":
                     processScheduledBills(ledger, budget, scheduledBills, undoStack);
                     break;
+
                 case "8":
                     System.out.println("Goodbye!");
                     running = false;
                     break;
+
                 default:
-                    System.out.println("Invalid choice. Please enter 1–8.");
+                    System.out.println("Invalid choice. Please enter a number from 1 to 8.");
             }
         }
 
         scanner.close();
     }
 
-    // -------------------- Helper Methods --------------------
-
-    // Add a transaction
+    // -------------------- ADD TRANSACTION --------------------
     private static void addTransaction(Scanner scanner, Ledger ledger, Budget budget,
                                        Stack<Transaction> undoStack) {
 
@@ -97,20 +109,20 @@ public class Main {
         System.out.println("Transaction added.");
     }
 
-    // Remove by index
+    // -------------------- REMOVE TRANSACTION --------------------
     private static void removeTransaction(Scanner scanner, Ledger ledger, Budget budget,
                                           Stack<Transaction> undoStack) {
 
-        var list = ledger.getTransactions();
+        var transactions = ledger.getTransactions();
 
-        if (list.isEmpty()) {
+        if (transactions.isEmpty()) {
             System.out.println("No transactions to remove.");
             return;
         }
 
         System.out.println("\n--- Transaction List ---");
-        for (int i = 0; i < list.size(); i++) {
-            System.out.println(i + ": " + list.get(i));
+        for (int i = 0; i < transactions.size(); i++) {
+            System.out.println(i + ": " + transactions.get(i));
         }
 
         System.out.print("Enter the number of the transaction to remove: ");
@@ -120,7 +132,7 @@ public class Main {
         try {
             index = Integer.parseInt(input);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid number.");
+            System.out.println("Invalid number. No transaction removed.");
             return;
         }
 
@@ -128,7 +140,7 @@ public class Main {
         if (removed != null) {
             budget.removeTransaction(removed);
 
-            // Clean undo stack if necessary
+            // Remove from undo stack if it's the most recent
             if (!undoStack.isEmpty() && undoStack.peek() == removed) {
                 undoStack.pop();
             }
@@ -137,7 +149,7 @@ public class Main {
         }
     }
 
-    // Undo using Stack
+    // -------------------- UNDO LAST TRANSACTION (STACK) --------------------
     private static void undoLastTransaction(Ledger ledger, Budget budget,
                                             Stack<Transaction> undoStack) {
 
@@ -157,7 +169,7 @@ public class Main {
         }
     }
 
-    // Queue: schedule a future bill
+    // -------------------- SCHEDULE BILL (QUEUE) --------------------
     private static void scheduleBill(Scanner scanner, Queue<Transaction> scheduledBills) {
 
         System.out.print("Enter category for future bill: ");
@@ -183,7 +195,7 @@ public class Main {
         System.out.println("Future bill scheduled.");
     }
 
-    // Process all bills in FIFO order
+    // -------------------- PROCESS SCHEDULED BILLS (QUEUE) --------------------
     private static void processScheduledBills(Ledger ledger, Budget budget,
                                               Queue<Transaction> scheduledBills,
                                               Stack<Transaction> undoStack) {
@@ -200,7 +212,6 @@ public class Main {
             ledger.addTransaction(t);
             budget.addTransaction(t);
             undoStack.push(t);
-
             System.out.println("Processed: " + t);
         }
 
