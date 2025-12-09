@@ -26,8 +26,9 @@ public class Main {
             System.out.println("5. Undo last added transaction");
             System.out.println("6. Schedule a future bill");
             System.out.println("7. Process scheduled bills");
-            System.out.println("8. View monthly report");
-            System.out.println("9. Exit");
+            System.out.println("8. View monthly report (for one month)");
+            System.out.println("9. View monthly totals (using arrays)");
+            System.out.println("10. Exit");
             System.out.print("Enter your choice: ");
 
             String choice = scanner.nextLine();
@@ -69,12 +70,16 @@ public class Main {
                     break;
 
                 case "9":
+                    budget.showAllMonthlyTotalsFromArrays();
+                    break;
+
+                case "10":
                     System.out.println("Goodbye!");
                     running = false;
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Please enter a number from 1 to 9.");
+                    System.out.println("Invalid choice. Please enter a number from 1 to 10.");
             }
         }
 
@@ -219,7 +224,7 @@ public class Main {
         System.out.println("All scheduled bills processed.");
     }
 
-    // -------------------- VIEW MONTHLY REPORT --------------------
+    // -------------------- VIEW MONTHLY REPORT (single month) --------------------
     private static void viewMonthlyReport(Scanner scanner, Ledger ledger, Budget budget) {
 
         System.out.print("Enter month number (1 to 12): ");

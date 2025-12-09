@@ -7,21 +7,36 @@ public class Budget {
     private double totalExpenses;
     private HashMap<String, Double> categoryTotals;
 
+    // Arrays for monthly totals (index 0 = January, 11 = December)
+    private double[] monthlyIncome;
+    private double[] monthlyExpenses;
+
     public Budget() {
         totalIncome = 0.0;
         totalExpenses = 0.0;
         categoryTotals = new HashMap<>();
+
+        monthlyIncome = new double[12];
+        monthlyExpenses = new double[12];
     }
 
     // Add a transaction and update totals
     public void addTransaction(Transaction t) {
         double amount = t.getAmount();
         String category = t.getCategory();
+        int month = extractMonthFromDate(t.getDate());
 
         if (amount > 0) {
             totalIncome += amount;
+            if (month >= 1 && month <= 12) {
+                monthlyIncome[month - 1] += amount;
+            }
         } else {
-            totalExpenses += Math.abs(amount);
+            double expense = Math.abs(amount);
+            totalExpenses += expense;
+            if (month >= 1 && month <= 12) {
+                monthlyExpenses[month - 1] += expense;
+            }
         }
 
         double current = categoryTotals.getOrDefault(category, 0.0);
@@ -36,11 +51,19 @@ public class Budget {
 
         double amount = t.getAmount();
         String category = t.getCategory();
+        int month = extractMonthFromDate(t.getDate());
 
         if (amount > 0) {
             totalIncome -= amount;
+            if (month >= 1 && month <= 12) {
+                monthlyIncome[month - 1] -= amount;
+            }
         } else {
-            totalExpenses -= Math.abs(amount);
+            double expense = Math.abs(amount);
+            totalExpenses -= expense;
+            if (month >= 1 && month <= 12) {
+                monthlyExpenses[month - 1] -= expense;
+            }
         }
 
         Double current = categoryTotals.get(category);
@@ -140,6 +163,31 @@ public class Budget {
             for (String category : monthCategoryTotals.keySet()) {
                 System.out.println("- " + category + ": $" + monthCategoryTotals.get(category));
             }
+        }
+    }
+
+    // ================= Array-based monthly totals =================
+
+    // Shows all 12 months using the arrays
+    public void showAllMonthlyTotalsFromArrays() {
+        System.out.println("\n--- Monthly Totals (using arrays) ---");
+        boolean anyData = false;
+
+        for (int i = 0; i < 12; i++) {
+            double income = monthlyIncome[i];
+            double expenses = monthlyExpenses[i];
+            if (income != 0.0 || expenses != 0.0) {
+                anyData = true;
+                int monthNumber = i + 1;
+                double net = income - expenses;
+                System.out.println("Month " + monthNumber + " -> Income: $" + income
+                                   + ", Expenses: $" + expenses
+                                   + ", Net: $" + net);
+            }
+        }
+
+        if (!anyData) {
+            System.out.println("No monthly data recorded yet.");
         }
     }
 
