@@ -13,7 +13,6 @@ public class Ledger {
     // Add a new transaction to the history
     public void addTransaction(Transaction t) {
         transactions.add(t);
-        System.out.println("Transaction added.");
     }
 
     // Show every transaction currently in the ledger
@@ -48,7 +47,7 @@ public class Ledger {
     public boolean removeTransaction(Transaction t) {
         boolean removed = transactions.remove(t);
         if (removed) {
-            System.out.println("Removed transaction (undo): " + t);
+            System.out.println("Removed transaction: " + t);
         }
         return removed;
     }

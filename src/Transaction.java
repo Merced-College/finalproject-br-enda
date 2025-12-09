@@ -32,6 +32,6 @@ public class Transaction {
     // This makes printing a transaction way easier
     @Override
     public String toString() {
-        return date + " | " + category + " | $" + amount + " | " + description;
+        return date + " | " + category + " | $" + String.format("%.2f", amount) + " | " + description;
     }
 }

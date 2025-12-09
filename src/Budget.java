@@ -88,20 +88,28 @@ public class Budget {
         }
     }
 
-    // Main summary for the whole budget
+    // Main summary for the whole budget, with a nicer layout
     public void showSummary() {
-        System.out.println("\n--- Budget Summary ---");
-        System.out.println("Total Income: $" + totalIncome);
-        System.out.println("Total Expenses: $" + totalExpenses);
-        System.out.println("Net Balance: $" + (totalIncome - totalExpenses));
+        System.out.println();
+        System.out.println("=============== BUDGET SUMMARY ===============");
+        System.out.printf("Total Income   : $%.2f%n", totalIncome);
+        System.out.printf("Total Expenses : $%.2f%n", totalExpenses);
+        System.out.printf("Net Balance    : $%.2f%n", (totalIncome - totalExpenses));
+        System.out.println("----------------------------------------------");
+        System.out.println("Category breakdown:");
 
-        System.out.println("\nBy Category:");
-        for (String category : categoryTotals.keySet()) {
-            System.out.println("- " + category + ": $" + categoryTotals.get(category));
+        if (categoryTotals.isEmpty()) {
+            System.out.println("No category data yet.");
+        } else {
+            for (String category : categoryTotals.keySet()) {
+                double value = categoryTotals.get(category);
+                System.out.printf("- %-12s : $%.2f%n", category, value);
+            }
         }
+
+        System.out.println("==============================================");
     }
 
-    // ================= RECURSIVE TOTAL SPENDING =================
     // Public method that I call from Main to use my recursive algorithm
     public double calculateTotalSpendingRecursive(LinkedList<Transaction> transactions) {
         return sumExpensesRecursive(transactions, 0);
@@ -126,7 +134,6 @@ public class Budget {
         return thisAmount + sumExpensesRecursive(list, index + 1);
     }
 
-    // ================= MONTHLY REPORT (ONE MONTH) =================
     // This gives a more detailed report for a single month
     public void showMonthlyReport(LinkedList<Transaction> transactions, int monthNumber) {
         if (monthNumber < 1 || monthNumber > 12) {
@@ -138,7 +145,8 @@ public class Budget {
         double monthExpenses = 0.0;
         HashMap<String, Double> monthCategoryTotals = new HashMap<>();
 
-        System.out.println("\n--- Monthly Report for Month " + monthNumber + " ---");
+        System.out.println();
+        System.out.println("============== MONTH " + monthNumber + " REPORT ==============");
 
         for (Transaction t : transactions) {
             String date = t.getDate();
@@ -148,7 +156,6 @@ public class Budget {
                 double amount = t.getAmount();
                 String category = t.getCategory();
 
-                // Show the transaction itself
                 System.out.println(t);
 
                 if (amount > 0) {
@@ -162,25 +169,33 @@ public class Budget {
             }
         }
 
-        System.out.println("\nMonthly Income: $" + monthIncome);
-        System.out.println("Monthly Expenses: $" + monthExpenses);
-        System.out.println("Monthly Net: $" + (monthIncome - monthExpenses));
+        System.out.println("----------------------------------------------");
+        System.out.printf("Monthly Income  : $%.2f%n", monthIncome);
+        System.out.printf("Monthly Expenses: $%.2f%n", monthExpenses);
+        System.out.printf("Monthly Net     : $%.2f%n", (monthIncome - monthExpenses));
+        System.out.println("----------------------------------------------");
+        System.out.println("Monthly totals by category:");
 
-        System.out.println("\nMonthly totals by category:");
         if (monthCategoryTotals.isEmpty()) {
             System.out.println("No transactions found for this month.");
         } else {
             for (String category : monthCategoryTotals.keySet()) {
-                System.out.println("- " + category + ": $" + monthCategoryTotals.get(category));
+                double value = monthCategoryTotals.get(category);
+                System.out.printf("- %-12s : $%.2f%n", category, value);
             }
         }
+
+        System.out.println("==============================================");
     }
 
-    // ================= ARRAY BASED MONTHLY TOTALS =================
     // This prints out any month that actually has values in the arrays
     public void showAllMonthlyTotalsFromArrays() {
-        System.out.println("\n--- Monthly Totals (using arrays) ---");
+        System.out.println();
+        System.out.println("=============== MONTHLY TOTALS ===============");
         boolean anyData = false;
+
+        System.out.println("Month |   Income   |  Expenses  |   Net   ");
+        System.out.println("------|------------|-----------|----------");
 
         for (int i = 0; i < 12; i++) {
             double income = monthlyIncome[i];
@@ -190,19 +205,18 @@ public class Budget {
                 anyData = true;
                 int monthNumber = i + 1;
                 double net = income - expenses;
-                System.out.println("Month " + monthNumber
-                                   + " -> Income: $" + income
-                                   + ", Expenses: $" + expenses
-                                   + ", Net: $" + net);
+                System.out.printf("%5d | %10.2f | %9.2f | %8.2f%n",
+                                  monthNumber, income, expenses, net);
             }
         }
 
         if (!anyData) {
             System.out.println("No monthly data recorded yet.");
         }
+
+        System.out.println("============================================");
     }
 
-    // ================= HELPER TO GET MONTH FROM DATE STRING =================
     // Reads a month from a date like "11/03/2025" or "1/03/2025"
     private int extractMonthFromDate(String date) {
         if (date == null || date.isEmpty()) {
