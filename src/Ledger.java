@@ -50,4 +50,9 @@ public class Ledger {
         }
         return removed;
     }
+    
+    // This lets me replace the whole list when I load from a file
+    public void setTransactions(LinkedList<Transaction> newList) {
+        transactions = newList;
+    }
 }
