@@ -31,7 +31,7 @@ import java.util.Queue;
 import java.util.Scanner;
 import java.util.Stack;
 
-// Main class that runfs the whole Personal Finance Budget App
+// Main class that runs the whole Personal Finance Budget App
 public class Main {
 
     // Color codes to make the console look better
