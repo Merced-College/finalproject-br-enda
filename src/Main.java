@@ -10,9 +10,12 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+
+        // Main objects that the whole app uses
         Ledger ledger = new Ledger();
         Budget budget = new Budget();
 
+        // Stack for undo and queue for future bills
         Stack<Transaction> undoStack = new Stack<>();
         Queue<Transaction> scheduledBills = new LinkedList<>();
 
@@ -21,7 +24,6 @@ public class Main {
         boolean running = true;
 
         while (running) {
-            // updated menu with save/load options
             System.out.println("\nPlease choose an option:");
             System.out.println("1. Add a transaction");
             System.out.println("2. View all transactions");
@@ -49,9 +51,11 @@ public class Main {
                     break;
 
                 case "3":
+                    // Normal summary
                     budget.showSummary();
+                    // Extra line using the recursive algorithm
                     double recursiveTotal =
-                        budget.calculateTotalSpendingRecursive(ledger.getTransactions());
+                            budget.calculateTotalSpendingRecursive(ledger.getTransactions());
                     System.out.println("Total expenses (calculated with recursion): $" + recursiveTotal);
                     break;
 
@@ -93,51 +97,219 @@ public class Main {
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Please enter a number from 1–12.");
+                    System.out.println("Invalid choice. Please enter a number from 1 to 12.");
             }
         }
 
         scanner.close();
     }
 
-    // -------------------- SAVE DATA TO FILE --------------------
-    // This writes all my transactions to a text file so they don't disappear when I close the program
+    // ================== ADD TRANSACTION ==================
+    // This is where the user adds a new income or expense
+    private static void addTransaction(Scanner scanner, Ledger ledger, Budget budget,
+                                       Stack<Transaction> undoStack) {
+
+        System.out.print("Enter category (e.g. Food, Bills, Income): ");
+        String category = scanner.nextLine();
+
+        System.out.print("Enter amount (negative for expense, positive for income): ");
+        double amount;
+        try {
+            amount = Double.parseDouble(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Transaction cancelled.");
+            return;
+        }
+
+        System.out.print("Enter description: ");
+        String description = scanner.nextLine();
+
+        System.out.print("Enter date (e.g. 11/03/2025): ");
+        String date = scanner.nextLine();
+
+        Transaction t = new Transaction(category, amount, description, date);
+
+        // Add to ledger and budget so everything stays in sync
+        ledger.addTransaction(t);
+        budget.addTransaction(t);
+
+        // Push onto the undo stack so I can undo this later if needed
+        undoStack.push(t);
+
+        System.out.println("Transaction added.");
+    }
+
+    // ================== REMOVE TRANSACTION ==================
+    // This lets the user remove a transaction by its index in the list
+    private static void removeTransaction(Scanner scanner, Ledger ledger, Budget budget,
+                                          Stack<Transaction> undoStack) {
+
+        var transactions = ledger.getTransactions();
+
+        if (transactions.isEmpty()) {
+            System.out.println("No transactions to remove.");
+            return;
+        }
+
+        System.out.println("\n--- Transaction List ---");
+        for (int i = 0; i < transactions.size(); i++) {
+            System.out.println(i + ": " + transactions.get(i));
+        }
+
+        System.out.print("Enter the number of the transaction to remove: ");
+        String input = scanner.nextLine();
+
+        int index;
+        try {
+            index = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number. No transaction removed.");
+            return;
+        }
+
+        Transaction removed = ledger.removeTransaction(index);
+        if (removed != null) {
+            // Roll back this transaction in the budget too
+            budget.removeTransaction(removed);
+
+            // If that same transaction is on top of the undo stack, remove it there as well
+            if (!undoStack.isEmpty() && undoStack.peek() == removed) {
+                undoStack.pop();
+            }
+
+            System.out.println("Transaction removed successfully.");
+        }
+    }
+
+    // ================== UNDO LAST TRANSACTION (STACK) ==================
+    // Uses the stack to undo whatever was added most recently
+    private static void undoLastTransaction(Ledger ledger, Budget budget,
+                                            Stack<Transaction> undoStack) {
+
+        if (undoStack.isEmpty()) {
+            System.out.println("Nothing to undo.");
+            return;
+        }
+
+        Transaction last = undoStack.pop();
+        boolean removedFromLedger = ledger.removeTransaction(last);
+
+        if (removedFromLedger) {
+            budget.removeTransaction(last);
+            System.out.println("Last transaction undone.");
+        } else {
+            System.out.println("Undo failed, transaction not found in ledger.");
+        }
+    }
+
+    // ================== SCHEDULE BILL (QUEUE) ==================
+    // This does not hit the ledger or budget yet, it just puts the bill into the queue
+    private static void scheduleBill(Scanner scanner, Queue<Transaction> scheduledBills) {
+
+        System.out.print("Enter category for future bill: ");
+        String category = scanner.nextLine();
+
+        System.out.print("Enter amount (negative for expense): ");
+        double amount;
+        try {
+            amount = Double.parseDouble(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Bill not scheduled.");
+            return;
+        }
+
+        System.out.print("Enter description: ");
+        String description = scanner.nextLine();
+
+        System.out.print("Enter due date: ");
+        String date = scanner.nextLine();
+
+        Transaction t = new Transaction(category, amount, description, date);
+        scheduledBills.add(t);
+
+        System.out.println("Future bill scheduled.");
+    }
+
+    // ================== PROCESS SCHEDULED BILLS (QUEUE) ==================
+    // This pulls bills from the queue in order and actually applies them to the budget
+    private static void processScheduledBills(Ledger ledger, Budget budget,
+                                              Queue<Transaction> scheduledBills,
+                                              Stack<Transaction> undoStack) {
+
+        if (scheduledBills.isEmpty()) {
+            System.out.println("No scheduled bills to process.");
+            return;
+        }
+
+        System.out.println("\nProcessing scheduled bills...");
+
+        while (!scheduledBills.isEmpty()) {
+            Transaction t = scheduledBills.poll();
+            ledger.addTransaction(t);
+            budget.addTransaction(t);
+            undoStack.push(t);
+
+            System.out.println("Processed: " + t);
+        }
+
+        System.out.println("All scheduled bills processed.");
+    }
+
+    // ================== VIEW MONTHLY REPORT (ONE MONTH) ==================
+    // This asks for a month number and shows just that month's activity
+    private static void viewMonthlyReport(Scanner scanner, Ledger ledger, Budget budget) {
+
+        System.out.print("Enter month number (1 to 12): ");
+        String input = scanner.nextLine();
+
+        int month;
+        try {
+            month = Integer.parseInt(input);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid month number.");
+            return;
+        }
+
+        budget.showMonthlyReport(ledger.getTransactions(), month);
+    }
+
+    // ================== SAVE DATA TO FILE ==================
+    // Saves all transactions into a text file so I can load them back later
     private static void saveData(Ledger ledger) {
         try {
             FileWriter writer = new FileWriter("budget_data.txt");
 
-            // I'm basically saving each transaction as one line
+            // Each transaction is one line in the file
             for (Transaction t : ledger.getTransactions()) {
-                // I separate everything by commas so it's easy to rebuild later
-                writer.write(t.getCategory() + "," 
-                           + t.getAmount() + ","
-                           + t.getDescription() + ","
-                           + t.getDate() + "\n");
+                // I split values by commas. In a real app I would probably avoid commas in description.
+                writer.write(t.getCategory() + ","
+                             + t.getAmount() + ","
+                             + t.getDescription() + ","
+                             + t.getDate() + "\n");
             }
 
             writer.close();
-            System.out.println("Your data was saved to budget_data.txt!");
+            System.out.println("Your data was saved to budget_data.txt.");
         } catch (IOException e) {
             System.out.println("Something went wrong while saving the file.");
         }
     }
 
-    // -------------------- LOAD DATA FROM FILE --------------------
-    // This reads the text file and rebuilds all my transactions, budget, and undo stack
+    // ================== LOAD DATA FROM FILE ==================
+    // Reads the text file and rebuilds ledger, budget, and undo stack
     private static void loadData(Ledger ledger, Budget budget, Stack<Transaction> undoStack) {
         try {
             File file = new File("budget_data.txt");
 
             if (!file.exists()) {
-                System.out.println("No saved data found, file does not exist.");
+                System.out.println("No saved data found. The file does not exist yet.");
                 return;
             }
 
             Scanner fileReader = new Scanner(file);
-
-            // I make a brand new list to replace anything already in Ledger
             LinkedList<Transaction> newList = new LinkedList<>();
 
+            // Each line should look like: category,amount,description,date
             while (fileReader.hasNextLine()) {
                 String line = fileReader.nextLine();
                 String[] parts = line.split(",");
@@ -149,33 +321,28 @@ public class Main {
                     String date = parts[3];
 
                     Transaction t = new Transaction(category, amount, description, date);
-
                     newList.add(t);
                 }
             }
 
             fileReader.close();
 
-            // Replace everything in Ledger with the loaded data
+            // Replace everything in the ledger with what I just loaded
             ledger.setTransactions(newList);
 
-            // Reset budget totals before recalculating
-            budget = new Budget();
+            // Reset the budget and undo stack, then rebuild them from the loaded list
+            budget.resetAll();
             undoStack.clear();
 
-            // Rebuild budget totals and undo stack based on loaded transactions
             for (Transaction t : newList) {
                 budget.addTransaction(t);
                 undoStack.push(t);
             }
 
-            System.out.println("Your saved data was successfully loaded!");
+            System.out.println("Your saved data was successfully loaded.");
 
         } catch (Exception e) {
             System.out.println("Something went wrong while loading your data.");
         }
     }
-
-    // -------------------- The rest of Main.java stays the same --------------------
-    // (addTransaction, removeTransaction, undoLastTransaction, scheduleBill, etc.)
 }

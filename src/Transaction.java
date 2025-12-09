@@ -1,8 +1,10 @@
+// This class is just one transaction: either an income or an expense
 public class Transaction {
+
     private String category;
     private double amount;
     private String description;
-    private String date; // you can later switch to a date type if you want
+    private String date; // keeping it simple as a String like "11/03/2025"
 
     public Transaction(String category, double amount, String description, String date) {
         this.category = category;
@@ -27,7 +29,7 @@ public class Transaction {
         return date;
     }
 
-    // For printing a transaction nicely
+    // This makes printing a transaction way easier
     @Override
     public String toString() {
         return date + " | " + category + " | $" + amount + " | " + description;

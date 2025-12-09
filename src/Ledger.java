@@ -1,20 +1,22 @@
 import java.util.LinkedList;
 
+// This class keeps track of all transactions, kind of like a mini bank statement
 public class Ledger {
 
     private LinkedList<Transaction> transactions;
 
     public Ledger() {
+        // LinkedList lets me add and remove easily while keeping order
         transactions = new LinkedList<>();
     }
 
-    // Add a transaction to the ledger
+    // Add a new transaction to the history
     public void addTransaction(Transaction t) {
         transactions.add(t);
         System.out.println("Transaction added.");
     }
 
-    // Show all transactions in the ledger
+    // Show every transaction currently in the ledger
     public void showAllTransactions() {
         System.out.println("\n--- Transaction History ---");
         if (transactions.isEmpty()) {
@@ -26,12 +28,12 @@ public class Ledger {
         }
     }
 
-    // Get the list of transactions
+    // Gives me access to the whole list when I need it elsewhere
     public LinkedList<Transaction> getTransactions() {
         return transactions;
     }
 
-    // Remove a transaction by index (used in menu option 4)
+    // Remove a transaction by index (used when the user picks a number in the menu)
     public Transaction removeTransaction(int index) {
         if (index < 0 || index >= transactions.size()) {
             System.out.println("Invalid index. No transaction removed.");
@@ -50,8 +52,8 @@ public class Ledger {
         }
         return removed;
     }
-    
-    // This lets me replace the whole list when I load from a file
+
+    // This lets me replace the whole list at once, which I use when loading from a file
     public void setTransactions(LinkedList<Transaction> newList) {
         transactions = newList;
     }

@@ -1,13 +1,15 @@
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+// This class handles all the money logic: totals, categories, monthly breakdowns, and recursion
 public class Budget {
 
     private double totalIncome;
     private double totalExpenses;
     private HashMap<String, Double> categoryTotals;
 
-    // Arrays for monthly totals (index 0 = January, 11 = December)
+    // Arrays to track income and expenses for each month (index 0 = Jan, 11 = Dec)
     private double[] monthlyIncome;
     private double[] monthlyExpenses;
 
@@ -20,7 +22,16 @@ public class Budget {
         monthlyExpenses = new double[12];
     }
 
-    // Add a transaction and update totals
+    // I call this when I load from a file to reset everything
+    public void resetAll() {
+        totalIncome = 0.0;
+        totalExpenses = 0.0;
+        categoryTotals.clear();
+        Arrays.fill(monthlyIncome, 0.0);
+        Arrays.fill(monthlyExpenses, 0.0);
+    }
+
+    // Add a transaction and keep all totals updated
     public void addTransaction(Transaction t) {
         double amount = t.getAmount();
         String category = t.getCategory();
@@ -43,7 +54,7 @@ public class Budget {
         categoryTotals.put(category, current + Math.abs(amount));
     }
 
-    // Remove a transaction and roll back totals
+    // Undo a transaction inside the budget (used for remove and undo)
     public void removeTransaction(Transaction t) {
         if (t == null) {
             return;
@@ -77,7 +88,7 @@ public class Budget {
         }
     }
 
-    // Overall summary
+    // Main summary for the whole budget
     public void showSummary() {
         System.out.println("\n--- Budget Summary ---");
         System.out.println("Total Income: $" + totalIncome);
@@ -90,16 +101,15 @@ public class Budget {
         }
     }
 
-    // ================= Recursive total spending method =================
-
-    // Public method called from Main
+    // ================= RECURSIVE TOTAL SPENDING =================
+    // Public method that I call from Main to use my recursive algorithm
     public double calculateTotalSpendingRecursive(LinkedList<Transaction> transactions) {
         return sumExpensesRecursive(transactions, 0);
     }
 
-    // Private helper that actually uses recursion
+    // This is the actual recursive function that walks through the list
     private double sumExpensesRecursive(LinkedList<Transaction> list, int index) {
-        // Base case
+        // Base case: once index hits the end, I stop
         if (index == list.size()) {
             return 0.0;
         }
@@ -112,13 +122,12 @@ public class Budget {
             thisAmount = Math.abs(current.getAmount());
         }
 
-        // Recursive step
+        // Recursive step: add this expense and move to the next one
         return thisAmount + sumExpensesRecursive(list, index + 1);
     }
 
-    // ================= Monthly report method =================
-
-    // monthNumber should be 1 to 12
+    // ================= MONTHLY REPORT (ONE MONTH) =================
+    // This gives a more detailed report for a single month
     public void showMonthlyReport(LinkedList<Transaction> transactions, int monthNumber) {
         if (monthNumber < 1 || monthNumber > 12) {
             System.out.println("Invalid month number.");
@@ -134,11 +143,12 @@ public class Budget {
         for (Transaction t : transactions) {
             String date = t.getDate();
             int monthFromDate = extractMonthFromDate(date);
+
             if (monthFromDate == monthNumber) {
                 double amount = t.getAmount();
                 String category = t.getCategory();
 
-                // Show the transaction
+                // Show the transaction itself
                 System.out.println(t);
 
                 if (amount > 0) {
@@ -166,9 +176,8 @@ public class Budget {
         }
     }
 
-    // ================= Array-based monthly totals =================
-
-    // Shows all 12 months using the arrays
+    // ================= ARRAY BASED MONTHLY TOTALS =================
+    // This prints out any month that actually has values in the arrays
     public void showAllMonthlyTotalsFromArrays() {
         System.out.println("\n--- Monthly Totals (using arrays) ---");
         boolean anyData = false;
@@ -176,11 +185,13 @@ public class Budget {
         for (int i = 0; i < 12; i++) {
             double income = monthlyIncome[i];
             double expenses = monthlyExpenses[i];
+
             if (income != 0.0 || expenses != 0.0) {
                 anyData = true;
                 int monthNumber = i + 1;
                 double net = income - expenses;
-                System.out.println("Month " + monthNumber + " -> Income: $" + income
+                System.out.println("Month " + monthNumber
+                                   + " -> Income: $" + income
                                    + ", Expenses: $" + expenses
                                    + ", Net: $" + net);
             }
@@ -191,7 +202,8 @@ public class Budget {
         }
     }
 
-    // Helper to parse month from date string like "11/03/2025" or "1/03/2025"
+    // ================= HELPER TO GET MONTH FROM DATE STRING =================
+    // Reads a month from a date like "11/03/2025" or "1/03/2025"
     private int extractMonthFromDate(String date) {
         if (date == null || date.isEmpty()) {
             return -1;
