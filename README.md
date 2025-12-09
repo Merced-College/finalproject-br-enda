@@ -16,6 +16,6 @@ The app allows the user to:
 - Remove or undo the last transaction  
 - Schedule future bills  
 - View monthly reports and totals  
-- Save and load their data  
+- Save and load their data
 
 The purpose of this program is to help users keep track of their spending and manage their budget in an organized way.
