@@ -1,3 +1,25 @@
+/*
+    Personal Finance Budget App
+    Name: Brenda Romero Torres
+    Class: CPSC-39-12705
+    Date: November 22, 2025
+
+   CITATIONS:
+   - All ideas, features, and decisions for this project came from myself.
+     I used ChatGPT as a learning tool to help explain certain concepts,
+     break down tasks, and guide me on how to set up parts of the program.
+     I asked specific questions and ChatGPT helped me understand different
+     approaches so I could build the project correctly.
+
+   - GitHub Codespaces and GitHub Copilot provided general coding support
+     such as suggestions, file organization help, and small fixes. These
+     tools did not create the project on their own; I reviewed and modified
+     everything to match my goals and understanding.
+     
+   - This project reflects my ideas, my planning, and the guidance I chose
+     to use throughout the development process.
+*/
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -9,9 +31,10 @@ import java.util.Queue;
 import java.util.Scanner;
 import java.util.Stack;
 
+// Main class that runfs the whole Personal Finance Budget App
 public class Main {
 
-    // Color codes to make the console a little less boring
+    // Color codes to make the console look better
     public static final String RESET = "\u001B[0m";
     public static final String RED = "\u001B[31m";
     public static final String GREEN = "\u001B[32m";
@@ -34,7 +57,7 @@ public class Main {
 
         boolean running = true;
 
-        // Show menu once at the start
+        // Shows menu once at the start
         showMenu();
 
         while (running) {
@@ -57,7 +80,7 @@ public class Main {
 
                 case "3":
                     budget.showSummary();
-                    // This line uses my recursive method under the hood
+                    // This line uses my recursive method to double-check total expenses
                     double recursiveTotal =
                         budget.calculateTotalSpendingRecursive(ledger.getTransactions());
                     System.out.println("Total expenses (detailed calculation): $" + recursiveTotal);
@@ -133,7 +156,7 @@ public class Main {
     }
 
     // ================== ADD TRANSACTION ==================
-    // This is where the user adds a new income or expense
+    // Lets the user add a new income or expense
     private static void addTransaction(Scanner scanner, Ledger ledger, Budget budget,
                                        Stack<Transaction> undoStack) {
 
@@ -254,7 +277,7 @@ public class Main {
     }
 
     // ================== UNDO LAST TRANSACTION (STACK) ==================
-    // Uses the stack to undo whatever was added most recently
+    // Uses the stack to undo whichever transaction was added most recently
     private static void undoLastTransaction(Ledger ledger, Budget budget,
                                             Stack<Transaction> undoStack) {
 
@@ -275,7 +298,7 @@ public class Main {
     }
 
     // ================== SCHEDULE BILL (QUEUE) ==================
-    // This does not hit the ledger or budget yet; it just puts the bill into the queue
+    // puts the bill into the queue to be processed later
     private static void scheduleBill(Scanner scanner, Queue<Transaction> scheduledBills) {
 
         System.out.print("Enter category for the future bill: ");
@@ -322,7 +345,7 @@ public class Main {
     }
 
     // ================== PROCESS SCHEDULED BILLS (QUEUE) ==================
-    // This pulls bills from the queue in order and actually applies them to the budget
+    // This pulls bills from the queue in order and applies them to the budget
     private static void processScheduledBills(Ledger ledger, Budget budget,
                                               Queue<Transaction> scheduledBills,
                                               Stack<Transaction> undoStack) {
@@ -467,6 +490,7 @@ public class Main {
         return s.replace("%", "%25").replace("|", "%7C");
     }
 
+    // undo the escaping when loading from file
     private static String unescapeField(String s) {
         if (s == null) return "";
         return s.replace("%7C", "|").replace("%25", "%");

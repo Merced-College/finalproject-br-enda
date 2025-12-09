@@ -1,3 +1,8 @@
+/*
+    Ledger class for Personal Finance Budget App
+    Name: Brenda Romero Torres
+*/
+
 import java.util.LinkedList;
 
 // This class keeps track of all transactions, kind of like a mini bank statement

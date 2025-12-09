@@ -1,3 +1,8 @@
+/*
+    Transaction class for Personal Finance Budget App
+    Name: Brenda Romero Torres
+*/
+
 // This class is just one transaction: either an income or an expense
 public class Transaction {
 
@@ -29,7 +34,7 @@ public class Transaction {
         return date;
     }
 
-    // This makes printing a transaction way easier
+    // This makes printing a transaction have a nice format
     @Override
     public String toString() {
         return date + " | " + category + " | $" + String.format("%.2f", amount) + " | " + description;
